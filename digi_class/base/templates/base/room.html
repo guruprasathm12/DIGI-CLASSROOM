@@ -1,0 +1,102 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+<main>
+    <section id="room-name-wrapper">
+        <p>Room Name: <span id="room-name" class="room-name"></span></p>
+    </section>
+
+    <section id="video-streams"></section>
+
+    <section id="controls-wrapper">
+        <div class="icon-wrapper">
+            <img class="control-icon" id="mic-btn" src="{% static 'images/microphone.svg' %}" />
+        </div>
+
+        <div class="icon-wrapper">
+            <img class="control-icon" id="camera-btn" src="{% static 'images/video.svg' %}" />
+        </div>
+
+        <div class="icon-wrapper">
+            <img class="control-icon" id="leave-btn" src="{% static 'images/leave.svg' %}" />
+        </div>
+    </section>
+    <div class="comment">
+      <div id="dis"></div>
+        <div class="comm"><input type="text" style="width: 90%" class="com" /><button style="width: 8%" onclick="insertComment()">>></button></div>
+    </div>
+</main>
+
+
+<script type="text/javascript" src="{% static 'assets/AgoraRTC_N-4.8.0.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/streams.js' %}" ></script>
+<script>
+    async function createComment() {
+        try {
+          const data = new FormData();
+          data.append('room',document.getElementsByClassName("room-name")[0].innerHTML);
+          const response = await fetch('http://localhost/digi_class/create.php', {
+            body: data,
+            method: 'post',
+            headers: {
+                'Accept': 'application/json'
+            },
+          })
+        .then(function(res){ return res.json(); })
+        .then(function(data){ console.log( JSON.stringify( data ) ) });
+      
+        } catch (err) {
+          console.log(err);
+        }
+      }
+
+      createComment();
+      
+      
+    async function insertComment() {
+        try {
+            const data = new FormData();
+            data.append('room',document.getElementsByClassName("room-name")[0].innerHTML);
+            data.append('name',document.getElementsByClassName("user-name")[0].innerHTML);
+            data.append('comment',document.getElementsByClassName("com")[0].value);
+          const response = await fetch('http://localhost/digi_class/insert.php', {
+            
+            body: data,
+            method: 'post',
+            headers: {
+                'Accept': 'application/json'
+            }
+          })
+        .then(function(res){ return res.json(); })
+        .then(function(data){ alert( JSON.stringify( data ) ) });
+        } catch (err) {
+          console.log(err);
+        }
+        document.getElementsByClassName("com")[0].value="";
+      }
+
+      async function fetchComment() {
+        try {
+            const data = new FormData();
+            data.append('room',document.getElementsByClassName("room-name")[0].innerHTML);
+          const response = await fetch('http://localhost/digi_class/fetch.php', {
+            
+            body: data,
+            method: 'post',
+            headers: {
+                'Accept': 'application/json'
+            }
+          })
+          .then((response) => response.text())
+          .then((data) => {
+            document.getElementById("dis").innerHTML=data;
+          });
+        } catch (err) {
+          console.log(err);
+        }
+        setTimeout(function() {fetchComment();}, 1000);
+      }
+      fetchComment();
+</script>
+{% endblock content %}

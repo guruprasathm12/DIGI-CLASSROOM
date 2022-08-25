@@ -1,0 +1,205 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+<main>
+    <section id="form-container">
+
+        <img id="logo" src="{% static 'images/chat-icon.png' %}"/>
+
+        <div id="welcome-message">
+            <h1>Digital - Classroom</h1>
+        </div>
+
+        <form id="form">
+            <div class="field-wrapper">
+
+                <div class="form-field">
+                    <label>Classroom:</label>
+                    <input name="room" placeholder="Enter a room name..." id="room"  style="text-transform:uppercase"/>
+                </div>
+
+                <div class="form-field">
+                    <label>User:</label>
+                    <input name="name" placeholder="Enter your name..." oninput="checkprivilege()" id="name"  style="text-transform:uppercase"/>
+                </div>
+
+                <div class="form-field">
+                    <input id="sub" type="submit" value="CLASSROOM" />
+                </div>
+            </div>
+        </form>
+    </section>
+</main>
+
+<script>
+    function btn_dis()
+    {
+        document.getElementById("sub").disabled=true;
+        document.getElementById("sub").setAttribute("style","background-color: #ff0000;");
+
+    }
+    btn_dis();
+
+    let form = document.getElementById('form')
+
+    let handleSubmit = async (e) => {
+        e.preventDefault()
+        sub();
+        let room = e.target.room.value.toUpperCase()
+        let name = e.target.name.value
+
+        let response = await fetch(`/get_token/?channel=${room}`)
+        let data = await response.json()
+
+        let UID = data.uid
+        let token = data.token
+
+        sessionStorage.setItem('UID', UID)
+        sessionStorage.setItem('token', token)
+        sessionStorage.setItem('room', room)
+        sessionStorage.setItem('name', name)
+
+        window.open('/room/', '_self')
+    }
+
+
+
+    form.addEventListener('submit', handleSubmit)
+    var priv="";
+    var check="not";
+    async function checkprivilege() {
+        
+        try {
+            const data = new FormData();
+            data.append('user',document.getElementById("name").value);
+          const response = await fetch('http://localhost/digi_class/users.php', {
+            
+            body: data,
+            method: 'post',
+            headers: { 
+                'Accept': 'application/json'
+            }
+          })
+          .then((response) => response.text())
+          .then((data) => {
+            console.log(data);
+            priv=data;
+          });
+        } catch (err) {
+          console.log(err);
+        }
+        if(priv=="staff")
+        {
+        document.getElementById("sub").disabled=false;
+        document.getElementById("sub").setAttribute("style","background-color: rgb(75, 93, 172);");
+        document.getElementById("sub").value="CREATE CLASSROOM";
+        }
+        else if(priv=="student" || priv=="co_host")
+        {
+        document.getElementById("sub").disabled=false;
+        document.getElementById("sub").setAttribute("style","background-color: rgb(75, 93, 172);");
+        document.getElementById("sub").value="JOIN CLASSROOM";
+        }
+        else
+        {
+            document.getElementById("sub").value="CLASSROOM";
+            btn_dis();
+        }
+      }
+
+      
+      async function room() {
+        
+        try {
+            const data = new FormData();
+            data.append('user',document.getElementById("name").value);
+            data.append('room',document.getElementById("room").value);
+          const response = await fetch('http://localhost/digi_class/room.php', {
+            
+            body: data,
+            method: 'post',
+            headers: { 
+                'Accept': 'application/json'
+            }
+          })
+          .then((response) => response.text())
+          .then((data) => {
+            console.log(data);
+          });
+        } catch (err) {
+          console.log(err);
+        }
+        
+      }
+
+      async function attend() {
+        
+        try {
+            const data = new FormData();
+            data.append('name',document.getElementById("name").value);
+            data.append('room',document.getElementById("room").value);
+          const response = await fetch('http://localhost/digi_class/attend.php', {
+            
+            body: data,
+            method: 'post',
+            headers: { 
+                'Accept': 'application/json'
+            }
+          })
+          .then((response) => response.text())
+          .then((data) => {
+            console.log(data);
+          });
+        } catch (err) {
+          console.log(err);
+        }
+        
+      }
+
+      async function check_room() {
+        
+        try {
+            const data = new FormData();
+            data.append('room',document.getElementById("room").value);
+            const response = await fetch('http://localhost/digi_class/check_room.php', {
+            
+            body: data,
+            method: 'post',
+            headers: { 
+                'Accept': 'application/json'
+            }
+          })
+          .then((response) => response.text())
+          .then((data) => {
+            console.log("check1: "+data);
+            check=data;
+            if(check=="ok")
+            {
+                attend();
+            }
+          });
+        } catch (err) {
+          console.log(err);
+        }
+        
+      }
+      
+
+      function sub()
+      {
+
+        if(priv=="staff")
+        {
+            room();
+        }
+        else
+        {
+            check_room();
+        }
+      }
+
+</script>
+
+{% endblock content %}
+
